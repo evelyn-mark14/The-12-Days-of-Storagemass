@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="The 12 Days of Storage-mass – unlock today's parcel and discover a festive fact or dad joke."/>
+  <title>The 12 Days of Storage-mass</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .game-wrapper { max-width: 95vw; margin: 120px auto 60px; padding: 1rem; }
+    .game-header { text-align: center; margin-bottom: 0.5rem; }
+    .game-header h2 { font-size: 2rem; color: var(--primary-blue, #1b4b8b); }
+    .game-header p { font-size: 1.1rem; color: #5a5a5a; }
+    .game-area { display: flex; justify-content: center; align-items: center; position: relative; }
+    .parcel-image-container {
+      width: 100%;
+      max-width: 95vw;
+      border-radius: 16px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.18);
+      overflow: visible;
+      position: relative;
+      transform: scale(1.3);
+      transform-origin: top center;
+    }
+    .parcel-image-container img {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .parcel-overlay {
+      position: absolute;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.3s, transform 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.5rem;
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      opacity: 1;
+    }
+    .parcel-overlay:hover {
+      border-color: var(--accent-gold, #BD996A);
+      transform: scale(1.05);
+    }
+    .parcel-overlay.locked {
+      cursor: not-allowed;
+      opacity: 0.6;
+      filter: grayscale(50%);
+    }
+    .parcel-overlay.locked:hover {
+      border-color: #999;
+      transform: none;
+    }
+    .parcel-overlay.locked::after {
+      content: "";
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      width: 24px;
+      height: 24px;
+      background: url("./christmaslock.png") no-repeat center / contain;
+      z-index: 10;
+    }
+    
+    /* Festive countdown box */
+    .festive-box {
+      background: #b30000;
+      color: #ffffff;
+      padding: 16px 20px;
+      border-radius: 10px;
+      margin: 20px auto;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .festive-box h2 {
+      margin: 0 0 8px;
+      font-size: 1.3rem;
+    }
+    .countdown-time {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .countdown-time span {
+      flex: 1;
+    }
+    .countdown-time strong {
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+    
+    /* Database code styling */
+    .database-code {
+      margin-top: 20px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 14px;
+      text-align: center;
+      color: #333;
+    }
+    .database-code span {
+      font-weight: bold;
+      color: #1b4b8b;
+    }
+    .parcel-overlay.unlocked {
+      opacity: 1;
+    }
+    .parcel-overlay.revealed {
+      opacity: 1;
+    }
+    .announce { text-align: center; min-height: 2.4rem; margin-top: 1rem; color: var(--primary-blue, #1b4b8b); font-weight: 600; font-size: 1.05rem; }
+    
+    /* Cracker Overlay / Modal */
+    #crackerOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    
+    #crackerOverlay.active {
+      display: flex;
+    }
+    
+    #overlayBackdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      cursor: pointer;
+    }
+    
+    .cracker-modal {
+      position: relative;
+      z-index: 1;
+      padding: 20px 40px;
+    }
+    
+    .cracker-image {
+      display: block;
+      max-width: 800px;
+      width: 80vw;
+      height: auto;
+      object-fit: contain;
+      max-height: 80vh;
+    }
+    
+    .cracker-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70%;
+      text-align: center;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-shadow: 0 0 5px #000, 0 0 10px #000;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
+    
+    /* Snow Effect */
+    #snowContainer {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: 998;
+    }
+    
+    .snowflake {
+      position: absolute;
+      top: -10px;
+      color: #fff;
+      opacity: 0.8;
+      font-size: 14px;
+      animation-name: snow-fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+    
+    @keyframes snow-fall {
+      0%   { transform: translateY(-10px); }
+      100% { transform: translateY(110vh); }
+    }
+    
+    /* Santa Sleigh Animation */
+    .santa-transition {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      z-index: 10000;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    
+    .reindeer-container {
+      position: absolute;
+      top: 0;
+      left: -800px;
+      width: 100vw;
+      height: 100vh;
+      animation: reindeerFly 2s ease-in-out forwards;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .reindeer-line {
+      display: flex;
+      gap: 150px;
+      position: relative;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .reindeer {
+      font-size: 20rem;
+      animation: bounce 0.3s infinite alternate;
+      filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.8));
+      line-height: 1;
+    }
+    
+    .reindeer:nth-child(1) { animation-delay: 0s; }
+    .reindeer:nth-child(2) { animation-delay: 0.05s; }
+    .reindeer:nth-child(3) { animation-delay: 0.1s; }
+    .reindeer:nth-child(4) { animation-delay: 0.15s; }
+    .reindeer:nth-child(5) { animation-delay: 0.2s; }
+    .reindeer:nth-child(6) { animation-delay: 0.25s; }
+    .reindeer:nth-child(7) { animation-delay: 0.3s; }
+    .reindeer:nth-child(8) { animation-delay: 0.35s; }
+    
+    @keyframes reindeerFly {
+      0% {
+        left: -800px;
+      }
+      100% {
+        left: 100%;
+      }
+    }
+    
+    @keyframes bounce {
+      0% {
+        transform: translateY(0);
+      }
+      100% {
+        transform: translateY(-10px);
+      }
+    }
+    
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+    
+    .santa-transition.fade-out {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+    
+    @media (max-width: 900px) {
+      .game-wrapper { margin: 100px auto 40px; padding: 0.5rem; }
+      .game-header h2 { font-size: 1.5rem; }
+      .parcel-image-container { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Reindeer Transition Animation -->
+  <div class="santa-transition" id="santaTransition">
+    <div class="reindeer-container">
+      <div class="reindeer-line">
+        <div class="reindeer">🦌</div>
+        <div class="reindeer">🦌</div>
+        <div class="reindeer">🦌</div>
+        <div class="reindeer">🦌</div>
+        <div class="reindeer">🦌</div>
+        <div class="reindeer">🦌</div>
+        <div class="reindeer">🦌</div>
+        <div class="reindeer">🦌</div>
+      </div>
+    </div>
+  </div>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header role="banner">
+    <nav role="navigation" aria-label="Main navigation">
+      <div class="logo">
+        <img src="./logo.png" alt="IBM & Service Express Logo" width="40" height="40" />
+        <h1>Stuart Wade & Evelyn Mark</h1>
+      </div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main-content" role="main">
+    <div class="game-wrapper" aria-live="polite">
+      <div class="game-header">
+        <h2>The 12 Days of Storage-mass</h2>
+        <p>Unlock today's parcel to reveal your festive surprise!</p>
+      </div>
+
+      <!-- Festive Christmas countdown box -->
+      <div id="christmas-countdown" class="festive-box">
+        <h2>🎄 Christmas Countdown 🎄</h2>
+        <div class="countdown-time">
+          <span><strong id="cd-days">00</strong> days</span>
+          <span><strong id="cd-hours">00</strong> hrs</span>
+          <span><strong id="cd-mins">00</strong> mins</span>
+          <span><strong id="cd-secs">00</strong> secs</span>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="parcel-image-container">
+          <img src="./xmas-parcels-v3.jpg" alt="The 12 Days of Storage-mass parcels calendar" id="parcelImage" />
+        </div>
+      </div>
+      <div class="announce" id="announce" aria-live="assertive"></div>
+      
+      <!-- Database unlocking code – now visible -->
+      <div id="database-code" class="database-code">
+        Database unlock code: <span id="db-code-value">XYZ-123-ABC</span>
+      </div>
+    </div>
+  </main>
+
+  <footer role="contentinfo">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>About Us</h3>
+        <p>Stuart and I were introduced by Maria in September, and since then we’ve been dreaming up playful festive experiences to share with the team. This is just the first idea—stay tuned for more surprises!</p>
+      </div>
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Cracker Pop-up -->
+  <div id="crackerOverlay">
+    <div id="overlayBackdrop"></div>
+    <div class="cracker-modal" role="dialog" aria-modal="true">
+      <img id="crackerImage" src="./cracker-text.png" alt="Christmas image" class="cracker-image">
+      <div id="crackerText" class="cracker-text"></div>
+    </div>
+  </div>
+
+  <!-- Snow Layer -->
+  <div id="snowContainer"></div>
+
+  <script>
+    // All initialization when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Santa Sleigh Animation - Play on page load
+      const santaTransition = document.getElementById('santaTransition');
+      
+      // Check if we should show Santa animation (from button click or first visit)
+      const showSanta = sessionStorage.getItem('showSanta') === 'true';
+      const referrer = document.referrer;
+      const cameFromIndex = referrer.includes('index.html');
+      
+      if (showSanta || cameFromIndex) {
+        // Hide animation after it completes (faster now - 2s animation)
+        setTimeout(() => {
+          santaTransition.classList.add('fade-out');
+          setTimeout(() => {
+            santaTransition.style.display = 'none';
+          }, 500);
+        }, 2000);
+      } else {
+        santaTransition.style.display = 'none';
+      }
+      
+      // Reset flag
+      sessionStorage.setItem('showSanta', 'false');
+
+      // Parcel numbering and interaction
+      const parcelImage = document.getElementById('parcelImage');
+      const parcelContainer = document.querySelector('.parcel-image-container');
+      const announce = document.getElementById('announce');
+
+      // Image mapping for each number (1-12)
+      const numberImages = {
+        1: "./santadec1.png",
+        2: "./robbindec2.png",
+        3: "./xmaspuddingdec3.jpg",
+        4: "./reindeerdec4.jpg",
+        5: "./stockingdec5.png",
+        6: "./gingerbreaddec6.png",
+        7: "./sleighdec7.png",
+        8: "./elfdec8.png",
+        9: "./mixturedec9.png",
+        10: "./candycanedec10.jpg",
+        11: "./xmastreedec11.jpg",
+        12: "./cracker-text.png"
+      };
+      
+      // Messages for each parcel number (1-12)
+      const messages = {
+        1: "What's an IBM storage unit's favourite sport?\nDisk golf - it's all about minimising strokes!",
+        2: "IBM's Storage Insights offers AI-driven analytics to optimise storage environments, helping to reduce complexity and costs.",
+        3: "Why did the IBM FlashSystem become a DJ?\nIt loved spinning disks",
+        4: "IBM Storage Scale, formerly known as General Parallel File System (GPFS), is a high-performance clustered file system that allows concurrent read/write operations from multiple nodes.",
+        5: "My email password has been hacked again.\nThat's the third time I've had to rename the cat!",
+        6: "The IBM FlashSystem Cyber Recovery Guarantee ensures you can recover your secure, uncorrupted copies within 60 seconds.",
+        7: "Never use \"beef stew\" as your password.\nIt's not stroganoff.",
+        8: "IBM FlashSystem FCM4 has 5.5 times more write cycles than industry standard QLC solid-state drives.",
+        9: "Did you hear about the cybercriminal who got away?\nThey ransomware.",
+        10: "I needed a password eight characters long, so I picked Snow White and the Seven Dwarves.",
+        11: "Why do developer's prefer dark mode?\nBecause light attracts bugs!!!",
+        12: "How do you eat a hard drive?\nOne byte at a time!"
+      };
+      
+      // Function to get or create random number distribution
+      function getRandomNumberDistribution() {
+        const storageKey = 'parcelNumberDistribution';
+        let distribution = localStorage.getItem(storageKey);
+        
+        if (!distribution) {
+          // Create a random shuffle of numbers 1-12
+          const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+          // Fisher-Yates shuffle algorithm
+          for (let i = numbers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+          }
+          distribution = JSON.stringify(numbers);
+          localStorage.setItem(storageKey, distribution);
+        }
+        
+        return JSON.parse(distribution);
+      }
+      
+      // Get the random number distribution (consistent across page loads)
+      const numberDistribution = getRandomNumberDistribution();
+      
+      // Function to get parcel number by position (using random distribution)
+      function getParcelNumberByPosition(position) {
+        return numberDistribution[position - 1];
+      }
+      
+      // Cracker overlay elements
+      const overlay = document.getElementById('crackerOverlay');
+      const overlayBackdrop = document.getElementById('overlayBackdrop');
+      const crackerText = document.getElementById('crackerText');
+      const crackerImage = document.getElementById('crackerImage');
+      const snowContainer = document.getElementById('snowContainer');
+      
+      // Functions to show/hide cracker overlay
+      function showOverlay() {
+        overlay.classList.add('active');
+      }
+      
+      function hideOverlay() {
+        overlay.classList.remove('active');
+      }
+      
+      // Clicking the backdrop closes the overlay
+      overlayBackdrop.addEventListener('click', hideOverlay);
+      
+      // Snow effect functions
+      function startSnow() {
+        snowContainer.innerHTML = "";
+        const flakeCount = 40;
+        
+        for (let i = 0; i < flakeCount; i++) {
+          const flake = document.createElement('div');
+          flake.className = 'snowflake';
+          flake.textContent = '❄';
+          
+          const size = 10 + Math.random() * 16;
+          const left = Math.random() * 100;       // vw
+          const duration = 6 + Math.random() * 6; // seconds
+          const delay = Math.random() * 5;        // seconds
+          
+          flake.style.left = left + 'vw';
+          flake.style.fontSize = size + 'px';
+          flake.style.animationDuration = duration + 's';
+          flake.style.animationDelay = delay + 's';
+          
+          snowContainer.appendChild(flake);
+        }
+      }
+      
+      function stopSnow() {
+        snowContainer.innerHTML = "";
+      }
+
+      // Start constant background snow on the game page
+      startSnow();
+      
+      // CHRISTMAS COUNTDOWN (target: 25/12/2025)
+      (function () {
+        const target = new Date("2025-12-25T00:00:00");
+        const daysEl  = document.getElementById("cd-days");
+        const hoursEl = document.getElementById("cd-hours");
+        const minsEl  = document.getElementById("cd-mins");
+        const secsEl  = document.getElementById("cd-secs");
+        
+        function pad(n) {
+          return n.toString().padStart(2, "0");
+        }
+        
+        function updateCountdown() {
+          const now = new Date();
+          const diff = target - now;
+          if (diff <= 0) {
+            daysEl.textContent  = "00";
+            hoursEl.textContent = "00";
+            minsEl.textContent  = "00";
+            secsEl.textContent  = "00";
+            return;
+          }
+          const seconds = Math.floor(diff / 1000);
+          const days    = Math.floor(seconds / (60 * 60 * 24));
+          const hours   = Math.floor((seconds % (60 * 60 * 24)) / (60 * 60));
+          const mins    = Math.floor((seconds % (60 * 60)) / 60);
+          const secs    = seconds % 60;
+          daysEl.textContent  = pad(days);
+          hoursEl.textContent = pad(hours);
+          minsEl.textContent  = pad(mins);
+          secsEl.textContent  = pad(secs);
+        }
+        updateCountdown();                 // initial call
+        setInterval(updateCountdown, 1000);
+      })();
+      
+      // DATE-BASED UNLOCKING CODE - NOW VISIBLE
+      // Function to check if a parcel is unlocked based on its position (1-12)
+      function isParcelUnlocked(parcelPosition) {
+        // Get current UK time
+        const now = new Date();
+        const ukNowString = now.toLocaleString("en-GB", {timeZone: "Europe/London", year: 'numeric', month: '2-digit', day: '2-digit'});
+        const [ukDay, ukMonth, ukYear] = ukNowString.split('/').map(Number);
+        const ukNowDate = new Date(ukYear, ukMonth - 1, ukDay);
+        
+        // Unlock dates: parcel position 1 = Dec 1, position 2 = Dec 2, etc.
+        // Create unlock date: December parcelPosition, 2025
+        const unlockDate = new Date(2025, 11, parcelPosition); // Month is 0-indexed (11 = December)
+        
+        // Compare dates
+        return ukNowDate >= unlockDate;
+      }
+      
+      // Function to create clickable parcels using exact pixel coordinates
+      function createParcelOverlays() {
+        // Get image natural dimensions (original size before scaling)
+        const imgNaturalWidth = parcelImage.naturalWidth;
+        const imgNaturalHeight = parcelImage.naturalHeight;
+        
+        // Parcel coordinates in pixels (6x2 grid layout: 6 columns, 2 rows)
+        // Image dimensions: 1783×792
+        // Top row: y = 215 to 270, Bottom row: y = 270 to 340
+        const parcelCoordinates = [
+          { x1: 93, y1: 215, x2: 357, y2: 270 },   // Position 1 - Top row, Column 1
+          { x1: 93, y1: 270, x2: 357, y2: 340 },   // Position 2 - Bottom row, Column 1
+          { x1: 357, y1: 215, x2: 622, y2: 270 },  // Position 3 - Top row, Column 2
+          { x1: 357, y1: 270, x2: 622, y2: 340 },  // Position 4 - Bottom row, Column 2
+          { x1: 622, y1: 215, x2: 887, y2: 270 },  // Position 5 - Top row, Column 3
+          { x1: 622, y1: 270, x2: 887, y2: 340 },  // Position 6 - Bottom row, Column 3
+          { x1: 887, y1: 215, x2: 1151, y2: 270 }, // Position 7 - Top row, Column 4
+          { x1: 887, y1: 270, x2: 1151, y2: 340 }, // Position 8 - Bottom row, Column 4
+          { x1: 1151, y1: 215, x2: 1415, y2: 270 }, // Position 9 - Top row, Column 5
+          { x1: 1151, y1: 270, x2: 1415, y2: 340 }, // Position 10 - Bottom row, Column 5
+          { x1: 1415, y1: 215, x2: 1680, y2: 270 }, // Position 11 - Top row, Column 6
+          { x1: 1415, y1: 270, x2: 1680, y2: 340 }  // Position 12 - Bottom row, Column 6
+        ];
+        
+        // Calculate positions as percentages relative to the original image dimensions
+        // The scale transform on the image will automatically scale the overlays with it
+        parcelCoordinates.forEach((coord, index) => {
+          const parcelPosition = index + 1; // Fixed position 1-12 (no randomisation)
+          const number = getParcelNumberByPosition(parcelPosition);
+          
+          // DATE-BASED UNLOCKING CODE - NOW ACTIVE
+          const isUnlocked = isParcelUnlocked(parcelPosition);
+          
+          const leftPercent = (coord.x1 / imgNaturalWidth) * 100;
+          const topPercent = (coord.y1 / imgNaturalHeight) * 100;
+          const widthPercent = ((coord.x2 - coord.x1) / imgNaturalWidth) * 100;
+          const heightPercent = ((coord.y2 - coord.y1) / imgNaturalHeight) * 100;
+          
+          const parcelOverlay = document.createElement('div');
+          parcelOverlay.className = 'parcel-overlay';
+          parcelOverlay.style.left = leftPercent + '%';
+          parcelOverlay.style.top = topPercent + '%';
+          parcelOverlay.style.width = widthPercent + '%';
+          parcelOverlay.style.height = heightPercent + '%';
+          parcelOverlay.textContent = number;
+          parcelOverlay.setAttribute('data-number', number);
+          parcelOverlay.setAttribute('data-position', parcelPosition);
+          parcelOverlay.setAttribute('aria-label', `Parcel ${number}`);
+          
+          // DATE-BASED UNLOCKING CODE - NOW ACTIVE
+          // Add locked/unlocked class
+          if (isUnlocked) {
+            parcelOverlay.classList.add('unlocked');
+          } else {
+            parcelOverlay.classList.add('locked');
+          }
+          
+          parcelOverlay.addEventListener('click', function() {
+            // DATE-BASED UNLOCKING CODE - NOW ACTIVE
+            // Check unlock status dynamically
+            const position = parseInt(this.getAttribute('data-position'));
+            const currentlyUnlocked = isParcelUnlocked(position);
+            
+            if (!currentlyUnlocked) {
+              announce.textContent = `This parcel unlocks on December ${position}, 2025!`;
+              return;
+            }
+            
+            // Get the parcel number and show image with message
+            const number = parseInt(this.getAttribute('data-number'));
+            const message = messages[number] || 'testing';
+            const imageSrc = numberImages[number] || './cracker-text.png';
+            
+            // Update the image source
+            crackerImage.src = imageSrc;
+            crackerImage.alt = `Christmas image for day ${number}`;
+            crackerText.textContent = message;
+            showOverlay();
+            this.classList.add('revealed');
+          });
+          
+          parcelContainer.appendChild(parcelOverlay);
+        });
+      }
+      
+      // Function to update parcel lock states dynamically
+      function updateParcelLockStates() {
+        const overlays = document.querySelectorAll('.parcel-overlay');
+        overlays.forEach(overlay => {
+          const position = parseInt(overlay.getAttribute('data-position'));
+          const isUnlocked = isParcelUnlocked(position);
+          
+          if (isUnlocked) {
+            overlay.classList.remove('locked');
+            overlay.classList.add('unlocked');
+          } else {
+            overlay.classList.remove('unlocked');
+            overlay.classList.add('locked');
+          }
+        });
+      }
+      
+      // Periodically check and update parcel lock states (every minute)
+      setInterval(updateParcelLockStates, 60000);
+      
+      // Wait for image to load to get actual dimensions
+      parcelImage.onload = createParcelOverlays;
+      
+      // If image already loaded, trigger onload
+      if (parcelImage.complete) {
+        createParcelOverlays();
+      }
+    });
+  </script>
+</body>
+</html>
