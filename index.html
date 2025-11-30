@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The 12 Days of Storage-mass – an interactive festive calendar experience.">
+    <!-- Homepage -->
+    <title>The 12 Days of Storage-mass</title>
+    
+    <!-- The code has been obtained from here https://www.w3schools.com/css/css_font_google.asp to apply styling to the website -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+      /* Snow Effect - shared between index and game pages */
+      #snowContainer {
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        z-index: 998;
+      }
+
+      .snowflake {
+        position: absolute;
+        top: -10px;
+        color: #fff;
+        opacity: 0.8;
+        font-size: 14px;
+        animation-name: snow-fall;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+      }
+
+      @keyframes snow-fall {
+        0%   { transform: translateY(-10px); }
+        100% { transform: translateY(110vh); }
+      }
+    </style>
+</head>
+<body>
+    <!-- Skip to Main Content Link for Accessibility - Reference: W3Schools - Skip Links -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- The code has been obtained from here https://www.geeksforgeeks.org/html-aria-labelledby-attribute/ and adapted to navigation heading to make heading more visable--> 
+    <header role="banner">
+        <nav role="navigation" aria-label="Main navigation">
+            <div class="logo">
+                <img src="./logo.png" alt="IBM & Service Express Logo" width="40" height="40">
+                <h1>Stuart Wade & Evelyn Mark</h1>
+            </div>
+            <ul>
+                <li><a href="index.html" aria-current="page">Home</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" role="main">
+        <!-- Hero Section - This code has been referenced from https://www.awebco.com/blog/hero-section/  -->
+        <!-- The code has been obtained from here https://www.geeksforgeeks.org/html-aria-labelledby-attribute/ and adapted to hero heading to make heading more visable--> 
+        <section class="hero" aria-labelledby="hero-heading">
+            <h2 id="hero-heading">The 12 Days of Storage-mass</h2>
+            <p>Unwrap today's parcel and see if you've been blessed with a fact... or cursed with a dad joke. Tomorrow has another surprise waiting</p>
+            <a href="game.html" class="button" role="button" id="unwrapButton">Unwrap Today's Surprise</a>
+        </section>
+
+
+        
+    </main>
+
+    <!-- Understanding the footer attribute has been referenced from here https://css-tricks.com/couple-takes-sticky-footer/ -->
+    <footer role="contentinfo">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <p>Stuart and I were introduced by Maria in September, and since then we’ve been dreaming up playful festive experiences to share with the team. This is just the first idea—stay tuned for more surprises!</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Snow Layer -->
+    <div id="snowContainer"></div>
+
+    <script>
+        // Set flag to show Santa animation when navigating to game page
+        document.getElementById('unwrapButton').addEventListener('click', function() {
+            sessionStorage.setItem('showSanta', 'true');
+        });
+
+        // Constant snow effect on index page
+        (function initSnow() {
+            const snowContainer = document.getElementById('snowContainer');
+            if (!snowContainer) return;
+
+            const flakeCount = 40;
+
+            function createSnow() {
+                snowContainer.innerHTML = "";
+                for (let i = 0; i < flakeCount; i++) {
+                    const flake = document.createElement('div');
+                    flake.className = 'snowflake';
+                    flake.textContent = '❄';
+
+                    const size = 10 + Math.random() * 16;
+                    const left = Math.random() * 100;       // vw
+                    const duration = 6 + Math.random() * 6; // seconds
+                    const delay = Math.random() * 5;        // seconds
+
+                    flake.style.left = left + 'vw';
+                    flake.style.fontSize = size + 'px';
+                    flake.style.animationDuration = duration + 's';
+                    flake.style.animationDelay = delay + 's';
+
+                    snowContainer.appendChild(flake);
+                }
+            }
+
+            // Initial snow setup
+            createSnow();
+        })();
+    </script>
+</body>
+</html> 
