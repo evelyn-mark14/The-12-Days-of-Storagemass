@@ -439,8 +439,33 @@
         12: "How do you eat a hard drive?\nOne byte at a time!"
       };
       
-      // Parcel numbers are static - parcel position = parcel number
-      // No randomization needed
+      // Function to get or create random number distribution (persistent across refreshes)
+      function getRandomNumberDistribution() {
+        const storageKey = 'parcelNumberDistribution';
+        let distribution = localStorage.getItem(storageKey);
+        
+        if (!distribution) {
+          // Create a random shuffle of numbers 1-12
+          const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+          // Fisher-Yates shuffle algorithm
+          for (let i = numbers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+          }
+          distribution = JSON.stringify(numbers);
+          localStorage.setItem(storageKey, distribution);
+        }
+        
+        return JSON.parse(distribution);
+      }
+      
+      // Get the random number distribution (consistent across page loads)
+      const numberDistribution = getRandomNumberDistribution();
+      
+      // Function to get parcel number by position (using random distribution)
+      function getParcelNumberByPosition(position) {
+        return numberDistribution[position - 1];
+      }
       
       // Cracker overlay elements
       const overlay = document.getElementById('crackerOverlay');
@@ -529,9 +554,9 @@
       })();
       
       // DATE-BASED UNLOCKING CODE - NOW VISIBLE
-      // Function to check if a parcel is unlocked based on its position (1-12)
-      // Parcel n unlocks on n/12/2025 at 00:00 UK time
-      function isParcelUnlocked(parcelPosition) {
+      // Function to check if a parcel is unlocked based on its NUMBER (1-12)
+      // Parcel number n unlocks on n/12/2025 at 00:00 UK time (regardless of position)
+      function isParcelUnlocked(parcelNumber) {
         // Get current UK time components
         const now = new Date();
         const ukFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -555,8 +580,8 @@
         
         const ukNow = new Date(ukYear, ukMonth - 1, ukDay, ukHour, ukMin, ukSec);
         
-        // Unlock date: parcel n unlocks on n/12/2025 at 00:00:00 UK time
-        const unlockDate = new Date(2025, 11, parcelPosition, 0, 0, 0); // Month is 0-indexed (11 = December)
+        // Unlock date: parcel number n unlocks on n/12/2025 at 00:00:00 UK time
+        const unlockDate = new Date(2025, 11, parcelNumber, 0, 0, 0); // Month is 0-indexed (11 = December)
         
         // Compare: current UK time must be >= unlock date at 00:00
         return ukNow >= unlockDate;
@@ -590,10 +615,11 @@
         // The scale transform on the image will automatically scale the overlays with it
         parcelCoordinates.forEach((coord, index) => {
           const parcelPosition = index + 1; // Fixed position 1-12
-          const number = parcelPosition; // Parcel number = position (static, no randomization)
+          const number = getParcelNumberByPosition(parcelPosition); // Random number distribution (persistent)
           
           // DATE-BASED UNLOCKING CODE - NOW ACTIVE
-          const isUnlocked = isParcelUnlocked(parcelPosition);
+          // Unlock based on NUMBER, not position
+          const isUnlocked = isParcelUnlocked(number);
           
           const leftPercent = (coord.x1 / imgNaturalWidth) * 100;
           const topPercent = (coord.y1 / imgNaturalHeight) * 100;
@@ -621,17 +647,16 @@
           
           parcelOverlay.addEventListener('click', function() {
             // DATE-BASED UNLOCKING CODE - NOW ACTIVE
-            // Check unlock status dynamically
-            const position = parseInt(this.getAttribute('data-position'));
-            const currentlyUnlocked = isParcelUnlocked(position);
+            // Check unlock status dynamically based on NUMBER, not position
+            const number = parseInt(this.getAttribute('data-number'));
+            const currentlyUnlocked = isParcelUnlocked(number);
             
             if (!currentlyUnlocked) {
-              announce.textContent = `This parcel unlocks on December ${position}, 2025!`;
+              announce.textContent = `This parcel unlocks on December ${number}, 2025!`;
               return;
             }
             
             // Get the parcel number and show image with message
-            const number = parseInt(this.getAttribute('data-number'));
             const message = messages[number] || 'testing';
             const imageSrc = numberImages[number] || './cracker-text.png';
             
@@ -651,8 +676,8 @@
       function updateParcelLockStates() {
         const overlays = document.querySelectorAll('.parcel-overlay');
         overlays.forEach(overlay => {
-          const position = parseInt(overlay.getAttribute('data-position'));
-          const isUnlocked = isParcelUnlocked(position);
+          const number = parseInt(overlay.getAttribute('data-number'));
+          const isUnlocked = isParcelUnlocked(number);
           
           if (isUnlocked) {
             overlay.classList.remove('locked');
