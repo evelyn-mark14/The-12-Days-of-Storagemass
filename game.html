@@ -280,9 +280,35 @@
     }
     
     @media (max-width: 900px) {
-      .game-wrapper { margin: 100px auto 40px; padding: 0.5rem; }
+      .game-wrapper { margin: 90px auto 32px; padding: 0.5rem; }
       .game-header h2 { font-size: 1.5rem; }
-      .parcel-image-container { max-width: 100%; }
+      .game-header p { font-size: 1rem; }
+      .parcel-image-container {
+        max-width: 100%;
+        transform: none;           /* remove desktop scale so it fits small screens */
+      }
+      .parcel-overlay {
+        font-size: 1.2rem;         /* slightly smaller numbers on tablets/phones */
+      }
+    }
+
+    @media (max-width: 600px) {
+      .game-wrapper { margin: 80px auto 24px; padding: 0.5rem; }
+      .game-header h2 { font-size: 1.3rem; }
+      .game-header p { font-size: 0.95rem; }
+      .festive-box {
+        margin: 12px auto;
+        padding: 12px 14px;
+      }
+      .countdown-time {
+        font-size: 12px;
+      }
+      .countdown-time strong {
+        font-size: 1.2rem;
+      }
+      .parcel-overlay {
+        font-size: 1.1rem;
+      }
     }
   </style>
 </head>
@@ -703,3 +729,4 @@
   </script>
 </body>
 </html>
+
